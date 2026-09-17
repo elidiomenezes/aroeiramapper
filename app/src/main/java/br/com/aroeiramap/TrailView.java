@@ -13,7 +13,7 @@ public final class TrailView extends View {
     public TrailView(Context c, AttributeSet a){super(c,a);p.setStrokeCap(Paint.Cap.ROUND);setBackgroundColor(Color.rgb(8,17,11));}
     void setData(List<FieldDb.Point> t,List<FieldDb.Point> r){track=t;trees=r;if(!hasCenter&&!t.isEmpty()){FieldDb.Point q=t.get(t.size()-1);centerLat=q.lat;centerLon=q.lon;hasCenter=true;}invalidate();}
     void center(double lat,double lon){centerLat=lat;centerLon=lon;hasCenter=true;invalidate();}
-    protected void onDraw(Canvas c){super.onDraw(c);if(!hasCenter){p.setColor(Color.rgb(180,198,183));p.setTextSize(38);p.setTextAlign(Paint.Align.CENTER);c.drawText("Waiting for GPS…",getWidth()/2f,getHeight()/2f,p);return;}
+    protected void onDraw(Canvas c){c.drawColor(Color.rgb(8,17,11));if(!hasCenter){p.setColor(Color.rgb(180,198,183));p.setTextSize(38);p.setTextAlign(Paint.Align.CENTER);c.drawText("Acquiring location…",getWidth()/2f,getHeight()/2f,p);return;}
         grid(c); Path path=new Path(); boolean first=true;
         for(FieldDb.Point q:track){float x=x(q.lon),y=y(q.lat);if(first){path.moveTo(x,y);first=false;}else path.lineTo(x,y);}
         p.setStyle(Paint.Style.STROKE);p.setColor(Color.argb(65,46,125,50));p.setStrokeWidth(40f/metersPerPx);c.drawPath(path,p);
