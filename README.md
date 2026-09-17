@@ -9,6 +9,8 @@ Offline-first Android field mapper for finding and recording aroeira trees.
 - Saves aroeira locations locally with one tap.
 - Keeps tree markers between walks; **New walk** only clears the current trail.
 - Uses no account, map provider, analytics, or internet connection.
+- Uses GPS with network-location fallback and supports approximate or precise permission.
+- Dark field interface for night use.
 
 The view is a metric field grid centered on the current position, deliberately avoiding a network map dependency. All data stays in the app's SQLite database.
 

@@ -12,6 +12,7 @@ public final class TrackingService extends Service implements LocationListener {
     static final String ACTION_STOP="br.com.aroeiramap.STOP";
     private LocationManager manager;
     private FieldDb db;
+    private Location best;
 
     public void onCreate(){ super.onCreate(); db=new FieldDb(this); createChannel(); }
     public int onStartCommand(Intent intent,int flags,int id){
@@ -24,16 +25,31 @@ public final class TrackingService extends Service implements LocationListener {
             .addAction(new Notification.Action.Builder(null,"Stop",pi).build()).build();
         startForeground(7,n);
         manager=(LocationManager)getSystemService(LOCATION_SERVICE);
-        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED)
-            manager.requestLocationUpdates(LocationManager.GPS_PROVIDER,3000,3f,this,Looper.getMainLooper());
+        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED ||
+           checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){
+            subscribe(LocationManager.GPS_PROVIDER);
+            subscribe(LocationManager.NETWORK_PROVIDER);
+            useLastKnown(LocationManager.GPS_PROVIDER);
+            useLastKnown(LocationManager.NETWORK_PROVIDER);
+        }
         return START_STICKY;
     }
     public void onLocationChanged(Location l){
-        if(l.getAccuracy()>40) return;
+        if(!l.hasAccuracy() || l.getAccuracy()>100) return;
+        if(best!=null && l.getTime()<best.getTime()-15000) return;
+        best=l;
         db.track(l.getLatitude(),l.getLongitude(),System.currentTimeMillis());
         Intent i=new Intent(ACTION_UPDATED).setPackage(getPackageName());
         i.putExtra("lat",l.getLatitude()).putExtra("lon",l.getLongitude()).putExtra("accuracy",l.getAccuracy());
         sendBroadcast(i);
+    }
+    private void subscribe(String provider){
+        try{if(manager.isProviderEnabled(provider))manager.requestLocationUpdates(provider,2000,2f,this,Looper.getMainLooper());}
+        catch(SecurityException|IllegalArgumentException ignored){}
+    }
+    private void useLastKnown(String provider){
+        try{Location l=manager.getLastKnownLocation(provider);if(l!=null)onLocationChanged(l);}
+        catch(SecurityException|IllegalArgumentException ignored){}
     }
     public void onDestroy(){if(manager!=null)manager.removeUpdates(this);super.onDestroy();}
     public android.os.IBinder onBind(Intent i){return null;}
